@@ -1,68 +1,111 @@
-console.log("Hello world");
-let data, timelineCircles;
+let happiness_data, poverty_data, sharedData, happinessBarChart, povertyBarChart, scatterplot;
 
-d3.csv('data/disasters.csv')
-  .then(_data => {
-  	console.log('Data loading complete. Work with dataset.');
-  	data = _data;
-    console.log(data);
+/**/
+Promise.all([
+  d3.csv('data/happiness-cantril-ladder.csv'),
+  d3.csv('data/share-of-population-in-extreme-poverty-processed.csv')
+]).then(([happiness_data, poverty_data]) => {
+  console.log("Happiness:", happiness_data);
+  console.log("Poverty:", poverty_data);
 
-    //process the data - this is a forEach function.  You could also do a regular for loop.... 
-    data.forEach(d => { //ARROW function - for each object in the array, pass it as a parameter to this function
-      	d.cost = +d.cost; // convert string 'cost' to number
-      	d.daysFromYrStart = computeDays(d.start); //note- I just created this field in each object in the array on the fly
-
-				let tokens = d.start.split("-");
-  			d.year = +tokens[0];
-
-  	});
-
-  	// Create an instance (for example in main.js)
-		timelineCircles = new TimelineCircles({
-			'parentElement': '#timeline',
-			'containerHeight': 1100,
-			'containerWidth': 1000
-		}, data);
-
-})
-.catch(error => {
-    console.error('Error:');
-    console.log(error);
-});
-
-
-/**
- * Event listener: use color legend as filter
- */
-d3.selectAll('.legend-btn').on('click', function() {
-  console.log("button! ");
-  // Toggle 'inactive' class
-  d3.select(this).classed('inactive', !d3.select(this).classed('inactive'));
-  
-  // Check which categories are active
-  let selectedCategory = [];
-  d3.selectAll('.legend-btn:not(.inactive)').each(function() {
-    selectedCategory.push(d3.select(this).attr('category'));
+  // Convert string values to numbers
+  happiness_data.forEach(d => {
+    d.Year = +d.Year; 
+    d['Self-reported life satisfaction'] = +d['Self-reported life satisfaction']; 
   });
 
-  // Filter data accordingly and update vis
-  if (selectedCategory.length == 0) {
-    timelineCircles.data = data;
-  } else {
-    timelineCircles.data = data.filter(d => selectedCategory.includes(d.category));
-  }
-  timelineCircles.updateVis();
+  poverty_data.forEach(d => {
+    d.Year = +d.Year;
+    d.Population = +d.Population; 
+    d['Share of population in poverty ($3 a day)'] = +d['Share of population in poverty ($3 a day)']; 
+  });
 
+  const happinessColorScale = d3.scaleLinear()
+    .domain([0, 10])
+    .range(['#fff8c0', '#d89800']); // light yellow to dark yellow gradient
+
+  const povertyColorScale = d3.scaleLinear()
+    .domain([0, 100])
+    .range(['#f8c0c0', '#d80000']); // light red to dark red gradient
+  
+  /* COMBINE SHARED RECORDS FOR BOTH DATASETS BASED ON ENTITY AND YEAR
+     modified by me to find shared records between the two datasets based on Entity and Year */
+  const povertyByKey = new Map( // Create a map for quick lookup of poverty records by Entity and Year
+    poverty_data.map(d => [`${d.Entity}__${d.Year}`, d])
+  );
+
+  sharedData = happiness_data // Find records that have matching Entity and Year in both datasets
+    .filter(d => povertyByKey.has(`${d.Entity}__${d.Year}`))
+    .map(d => {
+      const povertyRecord = povertyByKey.get(`${d.Entity}__${d.Year}`);
+      return {
+        Entity: d.Entity,
+        Code: d.Code || povertyRecord.Code,
+        Year: d.Year,
+        'Share of population in poverty ($3 a day)': povertyRecord['Share of population in poverty ($3 a day)'],
+        Population: povertyRecord.Population,
+        'World region according to OWID': povertyRecord['World region according to OWID'],
+        'Self-reported life satisfaction': d['Self-reported life satisfaction'],
+      };
+    });
+
+  const sharedHappinessData = sharedData.map(d => ({
+    Entity: d.Entity,
+    Year: d.Year,
+    'Self-reported life satisfaction': d['Self-reported life satisfaction']
+  }));
+
+  const sharedPovertyData = sharedData.map(d => ({
+    Entity: d.Entity,
+    Year: d.Year,
+    Population: d.Population,
+    'Share of population in poverty ($3 a day)': d['Share of population in poverty ($3 a day)']
+  }));
+  window.sharedData = sharedData;
+  /////////////////////////////////////////////////////////////////////////////////////
+
+  happinessBarChart = new Happiness_BarChart({
+    parentElement: '#happiness-barchart', 
+    colorScale: happinessColorScale
+  }, happiness_data);
+  happinessBarChart.updateVis();
+
+  povertyBarChart = new Poverty_BarChart({
+    parentElement: '#poverty-barchart', 
+    colorScale: povertyColorScale
+  }, poverty_data);
+  povertyBarChart.updateVis();
+
+  scatterplot = new ScatterPlot({
+    parentElement: '#scatterplot',
+    colorScale: d3.scaleOrdinal(d3.schemeCategory10) // Categorical color scale for regions
+  }, sharedData);
+  scatterplot.updateVis();
+  /*
+  // Extract unique entities (from happiness data as an example)
+  const uniqueEntities = Array.from(new Set(happiness_data.map(d => d.Entity)));
+  console.log("Unique Entities:", uniqueEntities);
+
+  // Filtering example (e.g., filter for a specific entity)
+  const filterByEntity = (entityName) => {
+    return happiness_data.filter(d => d.Entity === entityName);
+  };
+  */
+}).catch(error => {
+  console.error('Error loading data:', error);
 });
 
-
-function computeDays(disasterDate){
-  	let tokens = disasterDate.split("-");
-
-  	let year = +tokens[0];
-  	let month = +tokens[1];
-  	let day = +tokens[2];
-
-    return (Date.UTC(year, month-1, day) - Date.UTC(year, 0, 0)) / 24 / 60 / 60 / 1000 ;
-
+function selectVis(Show) {
+  switch (Show) {
+    case 'barchart':
+      d3.select('#happiness-barchart').style('display', 'block');
+      d3.select('#poverty-barchart').style('display', 'block');
+      break;
+    case 'scatterplot':
+      console.log('Scatterplot selected - but not implemented yet!');
+      break;
+    default: // No selection or unrecognized selection
+      console.warn('Unrecognized visualization selection:', Show);
   }
+} 
+

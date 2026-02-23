@@ -1,34 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>D3 Project Starter Template</title>
+    <title>World of Data</title>
     <meta charset="UTF-8">
     <link rel="icon" href="data:;base64,iVBORwOKGO=" />
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>    
-    <!-- Add HTML content, SVG drawing area, ... -->
+    <header>
+        <h1>How Self-Satisfaction Correlates with Poverty</h1>
+        <p>Visualizing the relationship between self-reported life satisfaction and poverty levels across countries.</p>
+        <p class = "data-source">Poverty Data Source: Data from <a href="https://ourworldindata.org/grapher/share-of-population-in-extreme-poverty?tab=table&time=latest&country=MOZ~ZMB~KEN~NGA">Share of population living in extreme poverty</a></p>
+        <p class = "data-source">Self-Satisfaction Data Source: Data from <a href="https://ourworldindata.org/grapher/happiness-cantril-ladder?tab=discrete-bar&time=latest&country=OWID_WRL~OWID_EUR~OWID_ASI~OWID_AFR">Self-Reported Life Satisfaction</a></p>
+        <nav>
+            <button onclick="selectVis('barchart')">Bar Chart</button>
+            <button onclick="selectVis('scatterplot')">Scatter Plot</button>
+        </nav>
+    </header>
 
-    <ul class="legend">
-        <li class="legend-btn" category="tropical-cyclone"><span class="legend-symbol"></span> Tropical Cyclone</li>
-        <li class="legend-btn" category="drought-wildfire"><span class="legend-symbol"></span> Drought Wildfire</li>
-        <li class="legend-btn" category="severe-storm"><span class="legend-symbol"></span> Severe Storm</li>
-        <li class="legend-btn" category="flooding"><span class="legend-symbol"></span> Flooding</li>
-    </ul>
-
-    <svg id="timeline"></svg>
-
+    <div class = "level-1">
+        <div><svg id="happiness-barchart"></svg></div>
+        <div><svg id="poverty-barchart"></svg></div>
+        <div><svg id="scatterplot"></svg></div>
+    </div>
     <div id="tooltip"></div>
 
-
- 
     <!-- D3 bundle -->
     <script src="js/d3.v6.min.js"></script>
 
     <!-- Our JS code - INCLUDING the new files-->
+    <script src="js/happiness_barchart.js"></script>
+    <script src="js/poverty_barchart.js"></script>
+    <script src="js/scatterplot.js"></script>
     <script src="js/main.js"></script>
-    <script src="js/timelineCircles.js"></script> 
-
-
 </body>
 </html>
