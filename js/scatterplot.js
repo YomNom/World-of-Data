@@ -98,8 +98,8 @@ class Scatterplot {
     let vis = this;
     
     // Specificy accessor functions
-    vis.xValue = d => +d['Share of population in poverty ($3 a day)']; // X = poverty rate
-    vis.yValue = d => +d.Population; // Y = population
+    vis.xValue = d => +d['Share of population in poverty ($3 a day)']; 
+    vis.yValue = d => +d.Population; 
 
     // Set the scale input domains
     const maxX = d3.max(vis.data, vis.xValue);

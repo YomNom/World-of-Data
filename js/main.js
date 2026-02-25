@@ -34,29 +34,39 @@ Promise.all([
     .domain([0, 100])
     .range(['#f8c0c0', '#d80000']); // light red to dark red gradient
 
+
+  geodata.objects.countries.geometries.forEach(d => {
+    for (let i = 0; i < happiness_data.length; i++) {
+      if (d.properties.name == happiness_data[i].Entity) {
+        d.properties.happiness_stat = +happiness_data[i]['Self-reported life satisfaction'];
+      }
+    }
+    for (let i = 0; i < poverty_data.length; i++) {
+      if (d.properties.name == poverty_data[i].Entity) {
+        d.properties.poverty_stat = +poverty_data[i]['Share of population in poverty ($3 a day)'];
+      }
+    }
+  });
   /* COMBINE SHARED RECORDS FOR BOTH DATASETS BASED ON ENTITY AND YEAR
      modified by me to find shared records between the two datasets based on Entity and Year */
-  const povertyByKey = new Map( // Create a map for quick lookup of poverty records by Entity and Year
-    poverty_data.map(d => [`${d.Entity}__${d.Year}`, d])
-  );
 
-  sharedData = happiness_data // Find records that have matching Entity and Year in both datasets
-    .filter(d => povertyByKey.has(`${d.Entity}__${d.Year}`) && d.Year >= 2011 && d.Year <= 2024)
+  const povertyMap = new Map(poverty_data.map(d => [`${d.Entity}-${d.Year}`, d]));
+
+  sharedData = happiness_data
+    .filter(d => povertyMap.has(`${d.Entity}-${d.Year}`))
     .map(d => {
-      const povertyRecord = povertyByKey.get(`${d.Entity}__${d.Year}`);
+      const povertyRecord = povertyMap.get(`${d.Entity}-${d.Year}`);
       return {
         Entity: d.Entity,
-        Code: d.Code || povertyRecord.Code,
         Year: d.Year,
-        'Share of population in poverty ($3 a day)': povertyRecord['Share of population in poverty ($3 a day)'],
-        Population: povertyRecord.Population,
-        'World region according to OWID': povertyRecord['World region according to OWID'],
         'Self-reported life satisfaction': d['Self-reported life satisfaction'],
+        'Share of population in poverty ($3 a day)': povertyRecord['Share of population in poverty ($3 a day)'],
+        Population: povertyRecord.Population
       };
     });
 
-  console.log("Year range in sharedData:", d3.extent(sharedData, d => d.Year));
-  // window.sharedData = sharedData; 
+  console.log("Shared Data:", sharedData);
+ 
   /////////////////////////////////////////////////////////////////////////////////////
 
   geodata.objects.countries.geometries.forEach(d => {
