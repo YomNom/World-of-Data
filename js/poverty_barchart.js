@@ -132,14 +132,16 @@ class Poverty_BarChart {
           d3.select('#tooltip').style('display', 'none').style('opacity', 0);
         })
         .on('click', function(event, d) {
-          const isActive = countryFilter.includes(d.key);
+          const isActive = countryFilter.includes(d.Entity);
           if (isActive) {
-            countryFilter = countryFilter.filter(f => f !== d.key); // Remove filter
+            countryFilter = [];
+            vis.chart.selectAll('.bar').classed('active', false);
           } else {
-            countryFilter.push(d.key); // Append filter
+            countryFilter = [d.Entity]; // Single selection
+            vis.chart.selectAll('.bar').classed('active', false);
+            d3.select(this).classed('active', true);
           }
           filterData(); // Call global function to update scatter plot
-          d3.select(this).classed('active', !isActive); // Add class to style active filters with CSS
         });
 
     // Update axes

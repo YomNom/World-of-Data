@@ -7,7 +7,9 @@ Promise.all([
   d3.csv('data/happiness-cantril-ladder.csv'),
   d3.csv('data/share-of-population-in-extreme-poverty-processed.csv'),
   d3.json('data/countries-110m.json')
-]).then(([happiness_data, poverty_data, geodata]) => {
+]).then(([happinessData, povertyData, geodata]) => {
+  happiness_data = happinessData;
+  poverty_data = povertyData;
   console.log("Happiness:", happiness_data);
   console.log("Poverty:", poverty_data);
   console.log("Countries:", geodata);
@@ -39,7 +41,7 @@ Promise.all([
   );
 
   sharedData = happiness_data // Find records that have matching Entity and Year in both datasets
-    .filter(d => povertyByKey.has(`${d.Entity}__${d.Year}`))
+    .filter(d => povertyByKey.has(`${d.Entity}__${d.Year}`) && d.Year >= 2011 && d.Year <= 2024)
     .map(d => {
       const povertyRecord = povertyByKey.get(`${d.Entity}__${d.Year}`);
       return {
@@ -95,11 +97,13 @@ Promise.all([
   }, sharedData);
   lineChart.updateVis();
  
-  scatterplot = new ScatterPlot({
+  scatterplot = new Scatterplot({
     parentElement: '#scatterplot',
     colorScale: povertyColorScale // Categorical color scale for regions
   }, poverty_data);
 
+  scatterplot.data = [];
+  scatterplot.setTitle('Select a country');
   scatterplot.updateVis();
 }).catch(error => {
   console.error('Error loading data:', error);
@@ -107,9 +111,13 @@ Promise.all([
 
 function filterData() {
   if (countryFilter.length == 0) {
-    scatterplot.data = poverty_data;
+    scatterplot.data = [];
+    scatterplot.setTitle('Select a country');
   } else {
+    console.log("Filtering scatterplot data for countries:", countryFilter);
     scatterplot.data = poverty_data.filter(d => countryFilter.includes(d.Entity));
+    const label = `Selected: ${countryFilter.join(', ')}`;
+    scatterplot.setTitle(label);
   }
   scatterplot.updateVis();
 }
@@ -120,11 +128,16 @@ function filterData() {
 //  https://www.geeksforgeeks.org/javascript/remove-add-new-html-tags-using-javascript/ 
 function selectVis(Show) {
   everythingInvisible(); // clear visuals
+  countryFilter = []; // reset country filter when switching views
+  d3.select('#poverty-barchart').selectAll('.bar').classed('active', false);
+  scatterplot.data = [];
+  scatterplot.setTitle('Select a country');
+  scatterplot.updateVis();
   switch(Show) {
     case 'barchart':
       console.log("Selected Bar Chart");
       document.getElementById('barchart-container').style.display = 'flex';
-      setTimeout(() => { // Let's choropleth maps update first
+      setTimeout(() => { // Updates asap but after the DOM has rendered to prevent bugs with choropleth maps
         happinessBarChart.updateVis();
         povertyBarChart.updateVis();
       }, 0);

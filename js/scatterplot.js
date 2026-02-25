@@ -10,8 +10,8 @@ class Scatterplot {
       parentElement: _config.parentElement,
       colorScale: _config.colorScale,
       containerWidth: _config.containerWidth || 500,
-      containerHeight: _config.containerHeight || 300,
-      margin: _config.margin || {top: 25, right: 20, bottom: 20, left: 35},
+      containerHeight: _config.containerHeight || 500,
+      margin: _config.margin || {top: 40, right: 20, bottom: 40, left: 80},
       tooltipPadding: _config.tooltipPadding || 15
     }
     this.data = _data;
@@ -39,7 +39,6 @@ class Scatterplot {
         .ticks(6)
         .tickSize(-vis.height - 10)
         .tickPadding(10)
-        .tickFormat(d => d + ' km');
 
     vis.yAxis = d3.axisLeft(vis.yScale)
         .ticks(6)
@@ -67,19 +66,29 @@ class Scatterplot {
 
     // Append both axis titles
     vis.chart.append('text')
-        .attr('class', 'axis-title')
-        .attr('y', vis.height - 15)
-        .attr('x', vis.width + 10)
-        .attr('dy', '.71em')
-        .style('text-anchor', 'end')
-        .text('Distance');
+      .attr('class', 'axis-title')
+      .attr('y', vis.height + 30)
+      .attr('x', vis.width + 10)
+      .attr('dy', '.71em')
+      .style('text-anchor', 'end')
+      .text('Share of population in extreme poverty ($3 a day)')
+        .style('font-size', '12px');
 
     vis.svg.append('text')
-        .attr('class', 'axis-title')
-        .attr('x', 0)
-        .attr('y', 0)
-        .attr('dy', '.71em')
-        .text('Hours');
+      .attr('class', 'axis-title')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('dy', '.71em')
+      .text('Population')
+        .style('font-size', '12px');
+
+    // Append Title
+    vis.title = vis.svg.append('text')
+      .attr('class', 'axis-title')
+      .attr('x', vis.config.containerWidth / 2)
+      .attr('y', 20)
+      .style('text-anchor', 'middle')
+      .text('Select a country to see poverty rate vs population');
   }
 
   /**
@@ -89,13 +98,14 @@ class Scatterplot {
     let vis = this;
     
     // Specificy accessor functions
-    vis.colorValue = d => d['Share of population in extreme poverty ($3 a day)'];
-    vis.xValue = d => d.Score;
-    vis.yValue = d => d.Year;
+    vis.xValue = d => +d['Share of population in poverty ($3 a day)']; // X = poverty rate
+    vis.yValue = d => +d.Population; // Y = population
 
     // Set the scale input domains
-    vis.xScale.domain([0, d3.max(vis.data, vis.xValue)]);
-    vis.yScale.domain([0, d3.max(vis.data, vis.yValue)]);
+    const maxX = d3.max(vis.data, vis.xValue);
+    const maxY = d3.max(vis.data, vis.yValue);
+    vis.xScale.domain([0, Number.isFinite(maxX) ? maxX : 1]);
+    vis.yScale.domain([0, Number.isFinite(maxY) ? maxY : 1]);
 
     vis.renderVis();
   }
@@ -108,13 +118,13 @@ class Scatterplot {
 
     // Add circles
     const circles = vis.chart.selectAll('.point')
-        .data(vis.data, d => d.trail)
+        .data(vis.data, d => d.Entity)
       .join('circle')
         .attr('class', 'point')
         .attr('r', 4)
         .attr('cy', d => vis.yScale(vis.yValue(d)))
         .attr('cx', d => vis.xScale(vis.xValue(d)))
-        .attr('fill', d => vis.config.colorScale(vis.colorValue(d)));
+        .attr('fill', d => vis.config.colorScale(vis.xValue(d)));
 
     // Tooltip event listeners
     circles
@@ -124,12 +134,11 @@ class Scatterplot {
             .style('left', (event.pageX + vis.config.tooltipPadding) + 'px')   
             .style('top', (event.pageY + vis.config.tooltipPadding) + 'px')
             .html(`
-              <div class="tooltip-title">${d.trail}</div>
-              <div><i>${d.region}</i></div>
+              <div class="tooltip-title">${d.Entity}</div>
+              <div><i>${d['World region according to OWID']}</i></div>
               <ul>
-                <li>${d.distance} km, ~${d.time} hours</li>
-                <li>${d.difficulty}</li>
-                <li>${d.season}</li>
+                <li>${d.Population} people</li>
+                <li>${d['Share of population in poverty ($3 a day)']}% in poverty</li>
               </ul>
             `);
         })
@@ -146,5 +155,11 @@ class Scatterplot {
     vis.yAxisG
         .call(vis.yAxis)
         .call(g => g.select('.domain').remove())
+  }
+
+  setTitle(titleText) {
+    if (this.title) {
+      this.title.text(titleText);
+    }
   }
 }

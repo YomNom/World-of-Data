@@ -13,20 +13,20 @@
         <p class = "data-source">Poverty Data Source: Data from <a href="https://ourworldindata.org/grapher/share-of-population-in-extreme-poverty?tab=table&time=latest&country=MOZ~ZMB~KEN~NGA">Share of population living in extreme poverty</a></p>
         <p class = "data-source">Self-Satisfaction Data Source: Data from <a href="https://ourworldindata.org/grapher/happiness-cantril-ladder?tab=discrete-bar&time=latest&country=OWID_WRL~OWID_EUR~OWID_ASI~OWID_AFR">Self-Reported Life Satisfaction</a></p>
         <nav>
-            <button onclick="selectVis('barchart')">Bar Chart</button>
+            <button onclick="selectVis('barchart')">Bar Chart + Scatter</button>
             <button onclick="selectVis('linechart')">Line Chart</button>
             <button onclick="selectVis('happiness-choropleth')">Choropleth Map</button>
         </nav>
     </header>
 
     <div class = "graph-display">
-        <div id="barchart-container">
+        <div id="barchart-container" style="display:none;">
             <div><svg id="happiness-barchart"></svg></div>
             <div><svg id="poverty-barchart"></svg></div>
-            <div><svg id="scatterplot"></svg></div>
+            <div class = "scatter-wrap"><svg id="scatterplot"></svg></div>
         </div>
         <div id="linechart-container" style="display:none;"><svg id="linechart"></svg></div>
-        <div id="choropleth-container"style="display:none;">
+        <div id="choropleth-container">
             <div choropleth-buttons>
                 <button onclick="selectVis('happiness-choropleth')">Happiness Choropleth</button>
                 <button onclick="selectVis('poverty-choropleth')">Poverty Choropleth</button>

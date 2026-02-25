@@ -68,7 +68,13 @@ class PovertyChoroplethMap {
         .attr('y', -10)
         .text('Poverty rate (%)')
         .attr('font-size', '14px');
-
+    // Append Title
+    vis.svg.append('text')
+        .attr('x', vis.config.containerWidth / 2)
+        .attr('y', 20)
+        .attr('class', 'axis-title')
+        .style('text-anchor', 'middle')
+        .text('Share of Population in Extreme Poverty');
     vis.updateVis();
   }
 

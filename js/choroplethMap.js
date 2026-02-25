@@ -68,6 +68,14 @@ class ChoroplethMap {
         .attr('y', -10)
         .text('Happiness score')
         .attr('font-size', '14px');
+    
+    // Append Title
+    vis.svg.append('text')
+        .attr('x', vis.config.containerWidth / 2)
+        .attr('y', 20)
+        .attr('class', 'axis-title')
+        .style('text-anchor', 'middle')
+        .text('Self-Reported Life Satisfaction');
 
     vis.updateVis();
   }
