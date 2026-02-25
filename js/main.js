@@ -47,9 +47,7 @@ Promise.all([
       }
     }
   });
-  /* COMBINE SHARED RECORDS FOR BOTH DATASETS BASED ON ENTITY AND YEAR
-     modified by me to find shared records between the two datasets based on Entity and Year */
-
+  /* COMBINE SHARED RECORDS FOR BOTH DATASETS BASED ON ENTITY AND YEAR */
   const povertyMap = new Map(poverty_data.map(d => [`${d.Entity}-${d.Year}`, d]));
 
   sharedData = happiness_data
