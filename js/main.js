@@ -1,12 +1,16 @@
-let happiness_data, poverty_data, sharedData, happinessBarChart, povertyBarChart, scatterplot;
-
+let happiness_data, poverty_data, sharedData;
+let happinessBarChart, povertyBarChart, scatterplot, lineChart, happychoroplethMap, povertychoroplethMap;
+let happinessColorScale, povertyColorScale;
+let countryFilter = [];
 /**/
 Promise.all([
   d3.csv('data/happiness-cantril-ladder.csv'),
-  d3.csv('data/share-of-population-in-extreme-poverty-processed.csv')
-]).then(([happiness_data, poverty_data]) => {
+  d3.csv('data/share-of-population-in-extreme-poverty-processed.csv'),
+  d3.json('data/countries-110m.json')
+]).then(([happiness_data, poverty_data, geodata]) => {
   console.log("Happiness:", happiness_data);
   console.log("Poverty:", poverty_data);
+  console.log("Countries:", geodata);
 
   // Convert string values to numbers
   happiness_data.forEach(d => {
@@ -19,15 +23,15 @@ Promise.all([
     d.Population = +d.Population; 
     d['Share of population in poverty ($3 a day)'] = +d['Share of population in poverty ($3 a day)']; 
   });
-
-  const happinessColorScale = d3.scaleLinear()
+  
+  happinessColorScale = d3.scaleLinear()
     .domain([0, 10])
     .range(['#fff8c0', '#d89800']); // light yellow to dark yellow gradient
 
-  const povertyColorScale = d3.scaleLinear()
+  povertyColorScale = d3.scaleLinear()
     .domain([0, 100])
     .range(['#f8c0c0', '#d80000']); // light red to dark red gradient
-  
+
   /* COMBINE SHARED RECORDS FOR BOTH DATASETS BASED ON ENTITY AND YEAR
      modified by me to find shared records between the two datasets based on Entity and Year */
   const povertyByKey = new Map( // Create a map for quick lookup of poverty records by Entity and Year
@@ -49,20 +53,29 @@ Promise.all([
       };
     });
 
-  const sharedHappinessData = sharedData.map(d => ({
-    Entity: d.Entity,
-    Year: d.Year,
-    'Self-reported life satisfaction': d['Self-reported life satisfaction']
-  }));
-
-  const sharedPovertyData = sharedData.map(d => ({
-    Entity: d.Entity,
-    Year: d.Year,
-    Population: d.Population,
-    'Share of population in poverty ($3 a day)': d['Share of population in poverty ($3 a day)']
-  }));
-  window.sharedData = sharedData;
+  console.log("Year range in sharedData:", d3.extent(sharedData, d => d.Year));
+  // window.sharedData = sharedData; 
   /////////////////////////////////////////////////////////////////////////////////////
+
+  geodata.objects.countries.geometries.forEach(d => {
+    for (let i = 0; i < sharedData.length; i++) {
+      if (d.properties.name == sharedData[i].Entity) {
+        d.properties.poverty_stat = +sharedData[i]['Share of population in poverty ($3 a day)'];
+        d.properties.happiness_stat = +sharedData[i]['Self-reported life satisfaction'];
+      }
+    }
+  });
+
+  happychoroplethMap = new ChoroplethMap({
+    parentElement: '#happy-choropleth',
+    colorScale: happinessColorScale,
+  }, geodata);
+
+
+  povertychoroplethMap = new PovertyChoroplethMap({
+    parentElement: '#poverty-choropleth',
+    colorScale: povertyColorScale,
+  }, geodata);
 
   happinessBarChart = new Happiness_BarChart({
     parentElement: '#happiness-barchart', 
@@ -76,36 +89,79 @@ Promise.all([
   }, poverty_data);
   povertyBarChart.updateVis();
 
+  // Create line chart for time series comparison
+  lineChart = new LineChart({
+    parentElement: '#linechart'
+  }, sharedData);
+  lineChart.updateVis();
+ 
   scatterplot = new ScatterPlot({
     parentElement: '#scatterplot',
-    colorScale: d3.scaleOrdinal(d3.schemeCategory10) // Categorical color scale for regions
-  }, sharedData);
-  scatterplot.updateVis();
-  /*
-  // Extract unique entities (from happiness data as an example)
-  const uniqueEntities = Array.from(new Set(happiness_data.map(d => d.Entity)));
-  console.log("Unique Entities:", uniqueEntities);
+    colorScale: povertyColorScale // Categorical color scale for regions
+  }, poverty_data);
 
-  // Filtering example (e.g., filter for a specific entity)
-  const filterByEntity = (entityName) => {
-    return happiness_data.filter(d => d.Entity === entityName);
-  };
-  */
+  scatterplot.updateVis();
 }).catch(error => {
   console.error('Error loading data:', error);
 });
 
-function selectVis(Show) {
-  switch (Show) {
-    case 'barchart':
-      d3.select('#happiness-barchart').style('display', 'block');
-      d3.select('#poverty-barchart').style('display', 'block');
-      break;
-    case 'scatterplot':
-      console.log('Scatterplot selected - but not implemented yet!');
-      break;
-    default: // No selection or unrecognized selection
-      console.warn('Unrecognized visualization selection:', Show);
+function filterData() {
+  if (countryFilter.length == 0) {
+    scatterplot.data = poverty_data;
+  } else {
+    scatterplot.data = poverty_data.filter(d => countryFilter.includes(d.Entity));
   }
-} 
+  scatterplot.updateVis();
+}
 
+// Function to handle visualization selection
+// Ref: 
+//  https://www.mattmorgante.com/technology/javascript-add-remove-html-elements
+//  https://www.geeksforgeeks.org/javascript/remove-add-new-html-tags-using-javascript/ 
+function selectVis(Show) {
+  everythingInvisible(); // clear visuals
+  switch(Show) {
+    case 'barchart':
+      console.log("Selected Bar Chart");
+      document.getElementById('barchart-container').style.display = 'flex';
+      setTimeout(() => { // Let's choropleth maps update first
+        happinessBarChart.updateVis();
+        povertyBarChart.updateVis();
+      }, 0);
+      break;
+    case 'linechart':
+      console.log("Selected Line Chart");
+      document.getElementById('linechart-container').style.display = 'flex'; 
+      setTimeout(() => { // Stops choropleth from bugging out
+        lineChart.updateVis();
+      }, 0);
+      break;
+    case 'happiness-choropleth':
+      console.log("Selected Happiness Choropleth Map");
+      document.getElementById('choropleth-container').style.display = 'flex';
+      document.getElementById('happy-choropleth-container').style.display = 'flex';
+      document.getElementById('poverty-choropleth-container').style.display = 'none';
+      setTimeout(() => { // Just keeps choropleth maps from breaking
+        happychoroplethMap.updateVis();
+      }, 0);
+      break;
+    case 'poverty-choropleth':
+      console.log("Selected Poverty Choropleth Map");
+      document.getElementById('choropleth-container').style.display = 'flex';
+      document.getElementById('happy-choropleth-container').style.display = 'none';
+      document.getElementById('poverty-choropleth-container').style.display = 'flex';
+      setTimeout(() => { // Let the choropleths show their stuff
+        povertychoroplethMap.updateVis();
+      }, 0);
+      break;
+    default:
+      console.log("Invalid selection");
+  }
+}
+
+// renders all visualizations invisible
+function everythingInvisible() {
+  document.getElementById('barchart-container').style.display = 'none';
+  document.getElementById('linechart-container').style.display = 'none';
+  document.getElementById('choropleth-container').style.display = 'none';
+}

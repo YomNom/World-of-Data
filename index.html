@@ -14,24 +14,49 @@
         <p class = "data-source">Self-Satisfaction Data Source: Data from <a href="https://ourworldindata.org/grapher/happiness-cantril-ladder?tab=discrete-bar&time=latest&country=OWID_WRL~OWID_EUR~OWID_ASI~OWID_AFR">Self-Reported Life Satisfaction</a></p>
         <nav>
             <button onclick="selectVis('barchart')">Bar Chart</button>
-            <button onclick="selectVis('scatterplot')">Scatter Plot</button>
+            <button onclick="selectVis('linechart')">Line Chart</button>
+            <button onclick="selectVis('happiness-choropleth')">Choropleth Map</button>
         </nav>
     </header>
 
-    <div class = "level-1">
-        <div><svg id="happiness-barchart"></svg></div>
-        <div><svg id="poverty-barchart"></svg></div>
-        <div><svg id="scatterplot"></svg></div>
+    <div class = "graph-display">
+        <div id="barchart-container">
+            <div><svg id="happiness-barchart"></svg></div>
+            <div><svg id="poverty-barchart"></svg></div>
+            <div><svg id="scatterplot"></svg></div>
+        </div>
+        <div id="linechart-container" style="display:none;"><svg id="linechart"></svg></div>
+        <div id="choropleth-container"style="display:none;">
+            <div choropleth-buttons>
+                <button onclick="selectVis('happiness-choropleth')">Happiness Choropleth</button>
+                <button onclick="selectVis('poverty-choropleth')">Poverty Choropleth</button>
+            </div>
+            <div id="happy-choropleth-container"><svg id="happy-choropleth"></svg></div>
+            <div id="poverty-choropleth-container" style="display:none;"><svg id="poverty-choropleth"></svg></div>
+        </div>
     </div>
+
+    <svg height="5" width="5" xmlns="http://www.w3.org/2000/svg" version="1.1">
+        <defs>
+            <pattern id="lightstripe" patternUnits="userSpaceOnUse" width="5" height="5">
+            <image xlink:href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc1JyBoZWlnaHQ9JzUnPgogIDxyZWN0IHdpZHRoPSc1JyBoZWlnaHQ9JzUnIGZpbGw9J3doaXRlJy8+CiAgPHBhdGggZD0nTTAgNUw1IDBaTTYgNEw0IDZaTS0xIDFMMSAtMVonIHN0cm9rZT0nIzg4OCcgc3Ryb2tlLXdpZHRoPScxJy8+Cjwvc3ZnPg==" x="0" y="0" width="5" height="5"></image>
+            </pattern>
+        </defs>
+    </svg>
+
     <div id="tooltip"></div>
 
     <!-- D3 bundle -->
     <script src="js/d3.v6.min.js"></script>
-
+    
     <!-- Our JS code - INCLUDING the new files-->
     <script src="js/happiness_barchart.js"></script>
-    <script src="js/poverty_barchart.js"></script>
+    <script src="js/poverty_barchart.js"></script>    
+    <script src="js/linechart.js"></script>   
+    <script src="js/choroplethMap.js"></script>
+    <script src="js/povertychoroplethMap.js"></script>
     <script src="js/scatterplot.js"></script>
+    <script src="js/topojson.v3.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

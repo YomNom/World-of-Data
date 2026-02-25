@@ -15,10 +15,17 @@ nav {
   padding: 10px;
 }
 
-.level-1 {
+.graph-display {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
+}
+
+#barchart-container, #linechart-container, #choropleth-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  margin: 20px;
 }
 
 .data-source {
@@ -84,4 +91,8 @@ nav {
 }
 .legend-btn[category="flooding"] .legend-symbol {
   background: #59A14F;
+}
+
+.legend-label {
+  font-size: 12px;
 }

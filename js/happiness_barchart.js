@@ -29,7 +29,7 @@ class Happiness_BarChart {
     vis.width = vis.config.containerWidth - vis.config.margin.left - vis.config.margin.right;
     vis.height = vis.config.containerHeight - vis.config.margin.top - vis.config.margin.bottom;
 
-    // Initialize scales and axes
+    // Initialize scales 
     vis.xScale = d3.scaleLinear()
       .range([0, vis.width]);
 
@@ -37,6 +37,7 @@ class Happiness_BarChart {
       .range([0, vis.height])
       .paddingInner(0.2);
 
+    // Initialize axes
     vis.xAxis = d3.axisBottom(vis.xScale)
       .ticks(6)
       .tickFormat(d3.format('.1f'))
@@ -98,25 +99,23 @@ class Happiness_BarChart {
     // Add rectangles
     let bars = vis.chart.selectAll('.bar')
         .data(vis.data, vis.categoryValue)
-      .join('rect');
-    
-    bars.style('opacity', 0.5)
-      .transition().duration(1000)
+      .join('rect')
         .style('opacity', 1)
         .attr('class', 'bar')
         .attr('fill', d => vis.config.colorScale(vis.value(d)))
         .attr('x', 0)
         .attr('width', d => vis.xScale(vis.value(d)))
         .attr('height', vis.yScale.bandwidth())
-        .attr('y', d => vis.yScale(vis.categoryValue(d)))
+        .attr('y', d => vis.yScale(vis.categoryValue(d)));
     
     // Tooltip event listeners
     bars
         .on('mouseover', (event,d) => {
           d3.select('#tooltip')
+            .style('display', 'block')
             .style('opacity', 1)
-            // Format number with million and thousand separator
-            .html(`<div class="tooltip-label">Population</div>${d3.format(',')(d.Population)}`);
+            // Display happiness score
+            .html(`<div class="tooltip-label">${d.Entity}</div><div>Happiness Score: ${d['Self-reported life satisfaction'].toFixed(2)}</div>`);
         })
         .on('mousemove', (event) => {
           d3.select('#tooltip')
@@ -124,7 +123,7 @@ class Happiness_BarChart {
             .style('top', (event.pageY + vis.config.tooltipPadding) + 'px')
         })
         .on('mouseleave', () => {
-          d3.select('#tooltip').style('opacity', 0);
+          d3.select('#tooltip').style('display', 'none').style('opacity', 0);
         });
 
     // Update axes

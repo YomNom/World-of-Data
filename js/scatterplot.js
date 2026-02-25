@@ -89,9 +89,9 @@ class Scatterplot {
     let vis = this;
     
     // Specificy accessor functions
-    vis.colorValue = d => d.difficulty;
-    vis.xValue = d => d.time;
-    vis.yValue = d => d.distance;
+    vis.colorValue = d => d['Share of population in extreme poverty ($3 a day)'];
+    vis.xValue = d => d.Score;
+    vis.yValue = d => d.Year;
 
     // Set the scale input domains
     vis.xScale.domain([0, d3.max(vis.data, vis.xValue)]);

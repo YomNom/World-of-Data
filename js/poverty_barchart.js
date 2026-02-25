@@ -105,25 +105,23 @@ class Poverty_BarChart {
     // Add rectangles
     let bars = vis.chart.selectAll('.bar')
         .data(vis.data, vis.categoryValue)
-      .join('rect');
-    
-    bars.style('opacity', 0.5)
-      .transition().duration(1000)
+      .join('rect')
         .style('opacity', 1)
         .attr('fill', d => vis.config.colorScale(vis.value(d)))
         .attr('class', 'bar')
         .attr('x', 0)
         .attr('width', d => vis.xScale(vis.value(d)))
         .attr('height', vis.yScale.bandwidth())
-        .attr('y', d => vis.yScale(vis.categoryValue(d)))
+        .attr('y', d => vis.yScale(vis.categoryValue(d)));
     
     // Tooltip event listeners
     bars
         .on('mouseover', (event,d) => {
           d3.select('#tooltip')
+            .style('display', 'block')
             .style('opacity', 1)
-            // Format number with million and thousand separator
-            .html(`<div class="tooltip-label">Population</div>${d3.format(',')(d.Population)}`);
+            // Display poverty score
+            .html(`<div class="tooltip-label">${d.Entity}</div><div>Poverty Level: ${d['Share of population in poverty ($3 a day)'].toFixed(2)}%</div>`);
         })
         .on('mousemove', (event) => {
           d3.select('#tooltip')
@@ -131,7 +129,17 @@ class Poverty_BarChart {
             .style('top', (event.pageY + vis.config.tooltipPadding) + 'px')
         })
         .on('mouseleave', () => {
-          d3.select('#tooltip').style('opacity', 0);
+          d3.select('#tooltip').style('display', 'none').style('opacity', 0);
+        })
+        .on('click', function(event, d) {
+          const isActive = countryFilter.includes(d.key);
+          if (isActive) {
+            countryFilter = countryFilter.filter(f => f !== d.key); // Remove filter
+          } else {
+            countryFilter.push(d.key); // Append filter
+          }
+          filterData(); // Call global function to update scatter plot
+          d3.select(this).classed('active', !isActive); // Add class to style active filters with CSS
         });
 
     // Update axes
